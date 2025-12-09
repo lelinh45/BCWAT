@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Tấn công Brute-force</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <h2 style="color: #d9534f;">DEMO BẢO MẬT WEB</h2>
+        <p>Mô phỏng trang đăng nhập quản trị</p>
+        
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Tên đăng nhập</label>
+                <input type="text" id="username" name="username" placeholder="admin" required>
+            </div>
+            <div class="input-group">
+                <label>Mật khẩu</label>
+                <input type="password" id="password" name="password" placeholder="Nhập pass sai để test" required>
+            </div>
+            
+            <div class="mode-select">
+                <label>Chọn kịch bản test:</label>
+                <select id="loginMode">
+                    <option value="/login-vulnerable">1. Server thường (Test Fail2Ban)</option>
+                    <option value="/login-secure">2. Server an toàn (Test Middleware)</option>
+                </select>
+            </div>
+
+            <button type="submit">Đăng Nhập</button>
+            <div id="message"></div>
+        </form>
+        
+        <div class="info">
+            <small>IP của bạn: <span id="userIp">Đang tải...</span></small>
+        </div>
+    </div>
+
+    <script>
+        // Lấy IP người dùng để hiển thị cho vui
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => document.getElementById('userIp').innerText = data.ip)
+            .catch(() => document.getElementById('userIp').innerText = "Không xác định");
+
+        const form = document.getElementById('loginForm');
+        const messageDiv = document.getElementById('message');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            messageDiv.textContent = 'Đang gửi yêu cầu...';
+            messageDiv.className = '';
+
+            const username = form.username.value;
+            const password = form.password.value;
+            const mode = form.loginMode.value;
+
+            try {
+                const response = await fetch(mode, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.text();
+
+                if (response.ok) {
+                    messageDiv.textContent = "✅ " + data;
+                    messageDiv.className = 'success';
+                } else {
+                    // Nếu lỗi 429 hoặc 401
+                    if(response.status === 429) {
+                        messageDiv.innerHTML = "⛔ <b>BỊ CHẶN!</b><br>" + data;
+                    } else {
+                        messageDiv.textContent = "❌ " + data;
+                    }
+                    messageDiv.className = 'error';
+                }
+            } catch (error) {
+                messageDiv.innerHTML = "🚫 <b>MẤT KẾT NỐI!</b><br>Có thể Fail2Ban đã chặn IP của bạn.";
+                messageDiv.className = 'error';
+            }
+        });
+    </script>
+</body>
+</html>
