@@ -1,0 +1,9 @@
+[node-app-jail]
+enabled = true
+backend = auto
+filter = node-app-auth
+logpath = /var/log/node-app/auth.log
+maxretry = 5
+bantime = 60
+findtime = 60
+action = iptables-allports
